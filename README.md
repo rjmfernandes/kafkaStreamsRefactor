@@ -110,6 +110,22 @@ Open http://localhost:9021 and check cluster is healthy including Kafka Connect.
 
 You can go to [Anti-pattern example](./kafkaStreamsRefactor0/README.md) and the [Best-practice example](./kafkaStreamsRefactor1/README.md) and execute both in parallel.
 
+Both are capable to send data to Mongodb but one is more resilient than the other. If we stop the mongo database:
+
+```bash
+docker compose stop mongo
+```
+
+And wait a minute we will see the [Anti-pattern example](./kafkaStreamsRefactor0/README.md) entering into error while our other app [Best-practice example](./kafkaStreamsRefactor1/README.md) keeps executing with no issues. We can see though that the corresponding connector entered into error state. If we now restart the mongo database:
+
+```bash
+docker compose start mongo
+```
+
+And restart our connector it will pick from the point it left and continue the sink to mongo database (while meanwhile our kafka streams continued processing with no pause). Our other app would need to be restarted or some handling added to the app to be able to restart processing.
+
+Also if we compare the codebase of both apps the one following best practices is smaller since it doesnt have to handle any of the external communication to mongodb. Encapsulated in the configuration driven connector. Which as we saw is much easier to manage and isolate in case of errors communicating to mongo.
+
 ## Cleanup
 
 ```bash
