@@ -8,4 +8,4 @@ Once you have the 3 datagen source connectors running as per global README, you 
 Just run the io.confluent.developer.App class.
 
 You should see on the mongo express interface on http://localhost:18081 with user/password admin/pass for the database 
-demo, the new collection order getting populated with the joined data by the streams app.
+demo, the new collection orders getting populated with the joined data by the streams app.
