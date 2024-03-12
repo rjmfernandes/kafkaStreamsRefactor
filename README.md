@@ -126,6 +126,8 @@ And restart our connector it will pick from the point it left and continue the s
 
 Also if we compare the codebase of both apps the one following best practices is smaller since it doesnt have to handle any of the external communication to mongodb. Encapsulated in the configuration driven connector. Which as we saw is much easier to manage and isolate in case of errors communicating to mongo.
 
+Also take into account the latency added by communicating to the external system is minimised since we are testing on localhost in a real scenario would be much bigger. And the optimization of this comunnication for the upserts is already optimised within our sink connector if we follow best practices.
+
 ## Cleanup
 
 ```bash
