@@ -7,8 +7,7 @@ Once you have the 3 datagen source connectors running as per global README, you 
 
 Just run the io.confluent.developer.App class.
 
-You should see on the mongo express interface on http://localhost:18081 with user/password admin/pass for the database 
-demo, the new topic orders-enriched with the data from the orders topic enriched with the customer and product data from 
+You should see the new topic orders-enriched with the data from the orders topic enriched with the customer and product data from 
 the other topics.
 
 Now we can configure the sink connector to sink the data to the mongodb database.
