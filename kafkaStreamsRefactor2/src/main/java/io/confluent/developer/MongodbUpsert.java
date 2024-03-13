@@ -5,12 +5,12 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import shoes.shoe_customers;
-import shoes.shoe_orders_customers_products;
 import shoes.shoe_product;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ public class MongodbUpsert {
 
     public static final String CONNECTION_STRING = "mongodb://root:example@mongo:27017/";
     public static final String DB = "demo";
-    public static final String COLLECTION = "orders";
+    public static final String COLLECTION = "orders2";
     MongoClient mongoClient;
     MongoDatabase database;
 
@@ -28,57 +28,38 @@ public class MongodbUpsert {
         database = mongoClient.getDatabase(DB);
     }
 
-    public static void main(String[] args) {
-        MongodbUpsert mongodbUpsert = new MongodbUpsert();
-        shoe_orders_customers_products order = new shoe_orders_customers_products();
-        order.setOrderId(1);
-        order.setTs(Instant.now());
-        shoe_customers customer = new shoe_customers();
-        customer.setId("1");
-        customer.setFirstName("John");
-        customer.setLastName("Doe");
-        customer.setEmail("doe@test.com");
-        customer.setPhone("123456789");
-        customer.setStreetAddress("123 Main St");
-        customer.setState("CA");
-        customer.setZipCode("12345");
-        customer.setCountry("USA");
-        customer.setCountryCode("US");
-        order.setCustomer(customer);
-        shoe_product product = new shoe_product();
-        product.setId("1");
-        product.setName("shoe");
-        product.setBrand("nike");
-        product.setSalePrice(100);
-        product.setRating(4.5);
-        order.setProduct(product);
-        mongodbUpsert.upsert(order);
-        mongodbUpsert.close();
-    }
-
-    public void upsert(shoe_orders_customers_products order) {
+    public void upsertCustomer(shoe_customers customer) {
 
         // Access specific collection within the database
-        MongoCollection<Document> collection = database.getCollection(MongodbUpsert.COLLECTION);
+        MongoCollection<Document> collection = database.getCollection(COLLECTION);
 
         // Define the document to upsert
-        Document query = new Document("_id", order.getOrderId());
-        Document update = new Document("$set", buildDocument(order));
-
-        // Perform upsert operation
+        Document query = new Document("customer.id", customer.getId());
+        Bson update = Updates.combine(Updates.set("customer", getCustomerMap(customer)));
+        // Instructs the driver to insert a new document if none match the query
         UpdateOptions options = new UpdateOptions().upsert(true);
-        collection.updateOne(query, update,options);
 
-        System.out.println("Upserted order " + order.getOrderId()+" :"+order);
+        collection.updateMany(query, update,options);
+
+        System.out.println("Upserted orders for customer " + customer.getId()+" :"+customer);
 
     }
 
-    private Document buildDocument(shoe_orders_customers_products order) {
-        Document document= new Document("_id",order.getOrderId());
-        document.append("ts", order.getTs());
-        document.append("customer",getCustomerMap(order.getCustomer()));
-        document.append("product",getProductMap(order.getProduct()));
-        return document;
+    public void upsertProduct(shoe_product product) {
+
+        // Access specific collection within the database
+        MongoCollection<Document> collection = database.getCollection(COLLECTION);
+
+        // Define the document to upsert
+        Document query = new Document("product.id", product.getId());
+        Bson update = Updates.combine(Updates.set("customer", getProductMap(product)));
+        // Instructs the driver to insert a new document if none match the query
+        UpdateOptions options = new UpdateOptions().upsert(true);
+
+        collection.updateMany(query, update,options);
+
+        System.out.println("Upserted orders for product " + product.getId()+" :"+product);
+
     }
 
     private static Map<String,Object> getProductMap(shoe_product product) {

@@ -9,12 +9,8 @@ Once you have the 3 datagen source connectors running as per global README, you 
 
 Just run the io.confluent.developer.App class.
 
-Also run the product and customer consumer apps which will update Mongodb directly in case of updates on the 
-corresponding topics.
-
-You should see the new topic orders-enriched2 with the data from the orders topic enriched with the customer and product 
-data from the other topics. And also customer and product inner data getting updated when new updates arrive at 
-corresponding topics.
+You should see the new topic orders-enriched2 with the data from the orders topic enriched with the customer and product
+data from the other topics.
 
 Now we can configure the sink connector to sink the data to the mongodb database.
 
@@ -44,3 +40,6 @@ curl -i -X PUT -H "Accept:application/json" \
 ```
 
 Let's check the data in the mongodb database in http://localhost:18081 for the new collection orders2.
+
+Also run the product and customer consumer apps which will update Mongodb directly in case of updates on the 
+corresponding topics.

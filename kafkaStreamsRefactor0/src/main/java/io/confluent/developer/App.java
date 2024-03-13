@@ -96,22 +96,8 @@ public class App {
         return builder.build();
     }
 
-
-    public static Properties loadEnvProperties(String fileName) throws IOException {
-        Properties allProps = new Properties();
-        FileInputStream input = new FileInputStream(fileName);
-        allProps.load(input);
-        input.close();
-
-        return allProps;
-    }
-
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) {
-            args = new String[]{DEV_CONFIG_FILE};
-        }
-
-        new App().runRecipe(args[0]);
+        new App().runRecipe(DEV_CONFIG_FILE);
     }
 
     private void runRecipe(final String configPath) throws IOException {
@@ -119,7 +105,6 @@ public class App {
         try (InputStream inputStream = new FileInputStream(configPath)) {
             allProps.load(inputStream);
         }
-        allProps.put(StreamsConfig.APPLICATION_ID_CONFIG, allProps.getProperty("application.id"));
 
         final Topology topology = this.buildTopology(allProps, this.buildOrdersSerde(allProps),
                 this.buildCustomersSerde(allProps),
