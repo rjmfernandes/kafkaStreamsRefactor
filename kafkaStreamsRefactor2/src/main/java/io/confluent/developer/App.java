@@ -87,11 +87,13 @@ public class App {
 
         KStream<String,shoe_orders_customers> ordersCustomersStream= ordersStream.
                 selectKey( (orderID, order) -> order.getCustomerId() ).
-                leftJoin(customersTable,ordersCustomerJoiner);
+                leftJoin(customersTable,ordersCustomerJoiner,
+                        Joined.with(Serdes.String(), ordersSerde,customersSerde));
 
         KStream<String,shoe_orders_customers_products> ordersCustomersProductsStream= ordersCustomersStream.
                 selectKey( (orderID, order) -> order.getProductId() ).
-                leftJoin(productsTable,ordersCustomerProductJoiner);
+                leftJoin(productsTable,ordersCustomerProductJoiner,
+                        Joined.with(Serdes.String(), ordersCustomersSerde,productsSerde));
 
         ordersCustomersProductsStream.to(outputTopic, Produced.with(Serdes.String(),
                 ordersCustomersProductsSerde));
