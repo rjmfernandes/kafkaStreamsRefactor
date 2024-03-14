@@ -59,7 +59,7 @@ public class MongodbUpsert {
     public void upsert(shoe_orders_customers_products order) {
 
         // Access specific collection within the database
-        MongoCollection<Document> collection = database.getCollection(MongodbUpsert.COLLECTION);
+        MongoCollection<Document> collection = database.getCollection(COLLECTION);
 
         // Define the document to upsert
         Document query = new Document("_id", order.getOrderId());
