@@ -41,7 +41,7 @@ public class MongodbUpsert {
 
         collection.updateMany(query, update,options);
 
-        System.out.println("Upserted orders for customer " + customer.getId()+" :"+customer);
+        System.out.println("Updated orders for customer " + customer.getId()+" :"+customer);
 
     }
 
@@ -58,7 +58,7 @@ public class MongodbUpsert {
 
         collection.updateMany(query, update,options);
 
-        System.out.println("Upserted orders for product " + product.getId()+" :"+product);
+        System.out.println("Updated orders for product " + product.getId()+" :"+product);
 
     }
 
