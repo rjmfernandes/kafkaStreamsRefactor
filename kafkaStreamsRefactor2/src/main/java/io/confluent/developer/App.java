@@ -14,7 +14,9 @@ import shoes.shoe_orders_customers;
 import shoes.shoe_product;
 import shoes.shoe_orders_customers_products;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
@@ -24,79 +26,48 @@ import java.util.concurrent.CountDownLatch;
 public class App {
 
 
-    private final static String DEV_CONFIG_FILE = "configuration/dev.properties";
+    public final static String DEV_CONFIG_FILE = "configuration/dev.properties";
+    private static final String ORDERS_TOPIC = "orders";
+    public static final String CUSTOMERS_TOPIC = "customers";
+    public static final String PRODUCTS_TOPIC = "products";
+    private static final String OUTPUT_TOPIC = "orders-enriched2";
 
-    private SpecificAvroSerde<shoe_orders> buildOrdersSerde(final Properties allProps) {
-        final SpecificAvroSerde<shoe_orders> serde = new SpecificAvroSerde<>();
-        final Map<String, String> config = (Map) allProps;
-        serde.configure(config, false);
-        return serde;
-    }
-
-    private SpecificAvroSerde<shoe_customers> buildCustomersSerde(final Properties allProps) {
-        final SpecificAvroSerde<shoe_customers> serde = new SpecificAvroSerde<>();
-        final Map<String, String> config = (Map) allProps;
-        serde.configure(config, false);
-        return serde;
-    }
-
-    private SpecificAvroSerde<shoe_product> buildProductsSerde(Properties allProps) {
-        final SpecificAvroSerde<shoe_product> serde = new SpecificAvroSerde<>();
-        final Map<String, String> config = (Map) allProps;
-        serde.configure(config, false);
-        return serde;
-    }
-
-    private SpecificAvroSerde<shoe_orders_customers> buildOrdersCustomersSerde(Properties allProps) {
-        final SpecificAvroSerde<shoe_orders_customers> serde = new SpecificAvroSerde<>();
-        final Map<String, String> config = (Map) allProps;
-        serde.configure(config, false);
-        return serde;
-    }
-
-    private SpecificAvroSerde<shoe_orders_customers_products> buildOrdersCustomersProductsSerde(Properties allProps) {
-        final SpecificAvroSerde<shoe_orders_customers_products> serde = new SpecificAvroSerde<>();
-        final Map<String, String> config = (Map) allProps;
-        serde.configure(config, false);
-        return serde;
-    }
-
-    public Topology buildTopology(Properties allProps,
-                                  final SpecificAvroSerde<shoe_orders> ordersSerde,
-                                  final SpecificAvroSerde<shoe_customers> customersSerde,
-                                  final SpecificAvroSerde<shoe_product> productsSerde,
-                                  final SpecificAvroSerde<shoe_orders_customers> ordersCustomersSerde,
-                                  final SpecificAvroSerde<shoe_orders_customers_products> ordersCustomersProductsSerde)
-    {
+    public Topology buildTopology(Properties allProps) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final String ordersTopic = allProps.getProperty("orders.topic.name");
-        final String customersTopic = allProps.getProperty("customers.topic.name");
-        final String productsTopic = allProps.getProperty("products.topic.name");
-        final String outputTopic = allProps.getProperty("output.topic.name");
-
-        KStream<String, shoe_orders> ordersStream = builder.stream(ordersTopic, Consumed.with(Serdes.String(),
-                ordersSerde));
-        KTable<String, shoe_customers> customersTable = builder.table(customersTopic, Consumed.with(Serdes.String(),
-                customersSerde));
-        KTable<String, shoe_product> productsTable = builder.table(productsTopic, Consumed.with(Serdes.String(),
-                productsSerde));
+        KStream<String, shoe_orders> ordersStream = builder.stream(ORDERS_TOPIC,
+                (new SpecificAvroSerdeBuilder<shoe_orders>()).buildConsumed(allProps));
+        KTable<String, shoe_customers> customersTable = builder.table(CUSTOMERS_TOPIC,
+                (new SpecificAvroSerdeBuilder<shoe_customers>()).buildConsumed(allProps));
+        KTable<String, shoe_product> productsTable = builder.table(PRODUCTS_TOPIC,
+                (new SpecificAvroSerdeBuilder<shoe_product>()).buildConsumed(allProps));
 
         OrdersCustomerJoiner ordersCustomerJoiner = new OrdersCustomerJoiner();
         OrdersCustomerProductJoiner ordersCustomerProductJoiner = new OrdersCustomerProductJoiner();
 
-        KStream<String,shoe_orders_customers> ordersCustomersStream= ordersStream.
-                selectKey( (orderID, order) -> order.getCustomerId() ).
-                leftJoin(customersTable,ordersCustomerJoiner,
-                        Joined.with(Serdes.String(), ordersSerde,customersSerde));
+        KStream<String, shoe_orders_customers> ordersCustomersStream = ordersStream.
+                selectKey((orderID, order) -> order.getCustomerId()).
+                leftJoin(customersTable, ordersCustomerJoiner,
+                        Joined.with(Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders>()).buildSerde(allProps),
+                                (new SpecificAvroSerdeBuilder<shoe_customers>()).buildSerde(allProps)
+                        )
+                );
 
-        KStream<String,shoe_orders_customers_products> ordersCustomersProductsStream= ordersCustomersStream.
-                selectKey( (orderID, order) -> order.getProductId() ).
-                leftJoin(productsTable,ordersCustomerProductJoiner,
-                        Joined.with(Serdes.String(), ordersCustomersSerde,productsSerde));
+        KStream<String, shoe_orders_customers_products> ordersCustomersProductsStream = ordersCustomersStream.
+                selectKey((orderID, order) -> order.getProductId()).
+                leftJoin(productsTable, ordersCustomerProductJoiner,
+                        Joined.with(Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders_customers>()).buildSerde(allProps),
+                                (new SpecificAvroSerdeBuilder<shoe_product>()).buildSerde(allProps)
+                        )
+                );
 
-        ordersCustomersProductsStream.to(outputTopic, Produced.with(Serdes.String(),
-                ordersCustomersProductsSerde));
+        ordersCustomersProductsStream.to(OUTPUT_TOPIC,
+                Produced.with(Serdes.String(),
+                        (new SpecificAvroSerdeBuilder<shoe_orders_customers_products>()).buildSerde(allProps)
+                )
+        );
 
         return builder.build();
     }
@@ -107,13 +78,12 @@ public class App {
     }
 
     private void runRecipe(final String configPath) throws IOException {
-        final Properties allProps = Config.loadEnvProperties();
+        final Properties allProps = new Properties();
+        try (InputStream inputStream = new FileInputStream(configPath)) {
+            allProps.load(inputStream);
+        }
 
-        final Topology topology = this.buildTopology(allProps, this.buildOrdersSerde(allProps),
-                this.buildCustomersSerde(allProps),
-                this.buildProductsSerde(allProps),
-                this.buildOrdersCustomersSerde(allProps),
-                this.buildOrdersCustomersProductsSerde(allProps));
+        final Topology topology = this.buildTopology(allProps);
 
         System.out.println("Printing the Kafka Streams Topology");
         System.out.println(topology.describe().toString());
@@ -134,7 +104,7 @@ public class App {
         try {
             //only for demo purposes
             AdminClient admin = KafkaAdminClient.create(allProps);
-            admin.deleteTopics(Arrays.asList(allProps.getProperty("output.topic.name")));
+            admin.deleteTopics(Arrays.asList(OUTPUT_TOPIC));
             streams.cleanUp();
             streams.start();
             latch.await();

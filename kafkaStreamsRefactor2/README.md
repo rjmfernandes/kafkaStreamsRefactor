@@ -2,8 +2,7 @@
 
 This is the example following now not only the best practice for leveraging Kafka Connect to sink data externally to 
 mongodb but also to use Streams as much as possible and not only use Tables so to optimize memory usage (state store 
-minimization). This assumes that updates on customer and product data are not as frequent as the ones on the orders 
-topic.
+minimization). 
 
 Once you have the 3 datagen source connectors running as per global README, you can run the Kafka Streams application.
 
