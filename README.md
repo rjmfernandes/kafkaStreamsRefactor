@@ -2,7 +2,7 @@
 
 Kafka Streams Reffactor demo including Mongodb.
 
-The use case here is a join between multiple reference tables to be consolidated in an external database (mongodb). We are using for example purposes here 3 data sources (topics): orders, customers, products. But in a real scenario this would be potentially many more. Also the choice of orders here doesn't really match a real case scenario of a reference table but is used only for demonstration purposes and meaning only the most frequently updated table driving in general the join for consolidation through joins. 
+The use case here is a join between multiple reference tables to be consolidated in an external database (mongodb). We are using for example purposes here 3 data sources (topics): orders, customers, products. But in a real scenario this would be potentially many more. Also the choice of orders here doesn't really match a real case scenario of a reference table but is used only for demonstration purposes and meaning only the most frequently updated table driving in general the joins for consolidation. 
 
 ## Setup
 
