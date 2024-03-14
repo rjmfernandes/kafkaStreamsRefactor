@@ -128,9 +128,11 @@ Also if we compare the codebase of both apps the one following best practices is
 
 Also take into account the latency added by communicating to the external system is minimised since we are testing on localhost in a real scenario would be much bigger. And the optimization of this comunnication for the upserts is already optimised within our sink connector if we follow best practices.
 
+Also managing and monitoring our system and isolating issues is much easier when leveraging Kafka Connect besides also giving us the chance for configuring important points as dead letter queues, etc.
+
 ## Final Example 
 
-The second refactored example [KStreams example](./kafkaStreamsRefactor2/README.md) optimizes state storage usage by leveraging KStreams for orders and tavbles for reference tables only. It also runs consumers for products and customers topics to update all joined elements in case of updates in those topics.
+The second refactored example [KStreams example](./kafkaStreamsRefactor2/README.md) optimizes state storage usage by leveraging KStreams for orders and tables for reference tables only. It also runs consumers for products and customers topics to update all joined elements in case of updates in those topics. Adding on top of the benefits before the optimization on resources usage for implementing our solution and avoid state store memory explosion.
 
 ## Cleanup
 
