@@ -36,8 +36,8 @@ public class MongodbUpsert {
         // Define the document to upsert
         Document query = new Document("customer.id", customer.getId());
         Bson update = Updates.combine(Updates.set("customer", getCustomerMap(customer)));
-        // Instructs the driver to insert a new document if none match the query
-        UpdateOptions options = new UpdateOptions().upsert(true);
+        // Instructs the driver not to insert a new document if none match the query
+        UpdateOptions options = new UpdateOptions().upsert(false);
 
         collection.updateMany(query, update,options);
 
@@ -53,8 +53,8 @@ public class MongodbUpsert {
         // Define the document to upsert
         Document query = new Document("product.id", product.getId());
         Bson update = Updates.combine(Updates.set("customer", getProductMap(product)));
-        // Instructs the driver to insert a new document if none match the query
-        UpdateOptions options = new UpdateOptions().upsert(true);
+        // Instructs the driver not to insert a new document if none match the query
+        UpdateOptions options = new UpdateOptions().upsert(false);
 
         collection.updateMany(query, update,options);
 

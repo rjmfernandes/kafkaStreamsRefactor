@@ -41,5 +41,5 @@ curl -i -X PUT -H "Accept:application/json" \
 
 Let's check the data in the mongodb database in http://localhost:18081 for the new collection orders2.
 
-Also run the product and customer consumer apps which will update Mongodb directly in case of updates on the 
+Now run the product and customer consumer apps which will update Mongodb directly in case of updates on the 
 corresponding topics.
