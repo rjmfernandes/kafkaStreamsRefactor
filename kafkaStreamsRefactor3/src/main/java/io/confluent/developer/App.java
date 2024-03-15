@@ -4,14 +4,11 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import shoes.shoe_customers;
-import shoes.shoe_orders;
-import shoes.shoe_orders_customers;
-import shoes.shoe_product;
-import shoes.shoe_orders_customers_products;
+import shoes.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,12 +25,12 @@ public class App {
     private static final String ORDERS_TOPIC = "orders";
     public static final String CUSTOMERS_TOPIC = "customers";
     public static final String PRODUCTS_TOPIC = "products";
-    private static final String OUTPUT_TOPIC = "orders-enriched2";
+    private static final String OUTPUT_TOPIC = "orders-enriched3";
 
     public Topology buildTopology(Properties allProps) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, shoe_orders> ordersStream = builder.stream(ORDERS_TOPIC,
+        KTable<String, shoe_orders> ordersTable = builder.table(ORDERS_TOPIC,
                 (new SpecificAvroSerdeBuilder<shoe_orders>()).buildConsumed(allProps));
         KTable<String, shoe_customers> customersTable = builder.table(CUSTOMERS_TOPIC,
                 (new SpecificAvroSerdeBuilder<shoe_customers>()).buildConsumed(allProps));
@@ -41,9 +38,14 @@ public class App {
                 (new SpecificAvroSerdeBuilder<shoe_product>()).buildConsumed(allProps));
 
         OrdersCustomerJoiner ordersCustomerJoiner = new OrdersCustomerJoiner();
+        CustomersOrderJoiner customersOrderJoiner = new CustomersOrderJoiner();
         OrdersCustomerProductJoiner ordersCustomerProductJoiner = new OrdersCustomerProductJoiner();
+        ProductsOrderJoiner productsOrderJoiner = new ProductsOrderJoiner();
+        ProductsOrderCustomerJoiner productsOrderCustomerJoiner = new ProductsOrderCustomerJoiner();
 
-        KStream<String, shoe_orders_customers> ordersCustomersStream = ordersStream.
+        /*orders stream leading*/
+
+        KStream<String, shoe_orders_customers> ordersCustomersStream = ordersTable.toStream().
                 selectKey((orderID, order) -> order.getCustomerId()).
                 leftJoin(customersTable, ordersCustomerJoiner,
                         Joined.with(Serdes.String(),
@@ -62,6 +64,65 @@ public class App {
                 );
 
         ordersCustomersProductsStream.to(OUTPUT_TOPIC,
+                Produced.with(Serdes.String(),
+                        (new SpecificAvroSerdeBuilder<shoe_orders_customers_products>()).buildSerde(allProps)
+                )
+        );
+
+        /*customers stream leading*/
+        KTable<String, shoe_orders> ordersTableKeyCustomerId = ordersTable.groupBy(
+                        (key, value) -> KeyValue.pair(value.getCustomerId(), value),
+                        Grouped.with("orderByCustomerId", Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders>()).buildSerde(allProps))).
+                reduce(
+                        (aggValue, newValue) -> newValue,
+                        (aggValue, oldValue) -> oldValue
+                );
+        KStream<String, shoe_orders_customers> customersOrdersStream = customersTable.toStream().join(
+                ordersTableKeyCustomerId,
+                customersOrderJoiner,
+                Joined.with(Serdes.String(),
+                        (new SpecificAvroSerdeBuilder<shoe_customers>()).buildSerde(allProps),
+                        (new SpecificAvroSerdeBuilder<shoe_orders>()).buildSerde(allProps)));
+
+        KStream<String, shoe_orders_customers_products> customersOrdersProductsStream = customersOrdersStream.
+                selectKey((orderID, order) -> order.getProductId()).
+                leftJoin(productsTable, ordersCustomerProductJoiner,
+                        Joined.with(Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders_customers>()).buildSerde(allProps),
+                                (new SpecificAvroSerdeBuilder<shoe_product>()).buildSerde(allProps)
+                        )
+                );
+        customersOrdersProductsStream.to(OUTPUT_TOPIC,
+                Produced.with(Serdes.String(),
+                        (new SpecificAvroSerdeBuilder<shoe_orders_customers_products>()).buildSerde(allProps)
+                )
+        );
+
+        /* products stream leading */
+        KTable<String, shoe_orders> ordersTableKeyProductId = ordersTable.groupBy(
+                        (key, value) -> KeyValue.pair(value.getProductId(), value),
+                        Grouped.with("orderByProductId", Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders>()).buildSerde(allProps))).
+                reduce(
+                        (aggValue, newValue) -> newValue,
+                        (aggValue, oldValue) -> oldValue
+                );
+        KStream<String, shoe_orders_products> productsOrdersStream = productsTable.toStream().join(
+                ordersTableKeyProductId,
+                productsOrderJoiner,
+                Joined.with(Serdes.String(),
+                        (new SpecificAvroSerdeBuilder<shoe_product>()).buildSerde(allProps),
+                        (new SpecificAvroSerdeBuilder<shoe_orders>()).buildSerde(allProps)));
+        KStream<String, shoe_orders_customers_products> productsOrdersCustomersStream = productsOrdersStream.
+                selectKey((orderID, order) -> order.getProduct().getId()).
+                leftJoin(customersTable, productsOrderCustomerJoiner,
+                        Joined.with(Serdes.String(),
+                                (new SpecificAvroSerdeBuilder<shoe_orders_products>()).buildSerde(allProps),
+                                (new SpecificAvroSerdeBuilder<shoe_customers>()).buildSerde(allProps)
+                        )
+                );
+        productsOrdersCustomersStream.to(OUTPUT_TOPIC,
                 Produced.with(Serdes.String(),
                         (new SpecificAvroSerdeBuilder<shoe_orders_customers_products>()).buildSerde(allProps)
                 )

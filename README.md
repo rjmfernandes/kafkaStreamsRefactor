@@ -132,9 +132,13 @@ Also take into account the latency added by communicating to the external system
 
 Also managing and monitoring our system and isolating issues is much easier when leveraging Kafka Connect besides also giving us the chance for configuring important points as dead letter queues, etc.
 
-## Final Example 
+## Second Refactor Example - leverages KStream and Consumer Apps 
 
 The second refactored example [KStreams example](./kafkaStreamsRefactor2/README.md) optimizes state storage usage by leveraging KStreams for orders and tables for reference tables only. It also runs consumers for products and customers topics to update all joined elements in case of updates in those topics. Adding on top of the benefits before the optimization on resources usage for implementing our solution and avoid state store memory explosion.
+
+## Third Refactor Example - leverages many KStreams (but no consumer apps) 
+
+The third example [Only KStreams example](./kafkaStreamsRefactor3/README.md) avoids any extra consumer apps and solves the problem with the Kafka Streams app only but leveraging KStreams for the joins and avoid the state store memory explosion. The major issue is that the code starts to become harder to maintain.
 
 ## Cleanup
 

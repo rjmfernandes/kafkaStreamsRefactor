@@ -76,6 +76,7 @@ public class MongodbUpsert {
     private Document buildDocument(shoe_orders_customers_products order) {
         Document document= new Document("_id",order.getOrderId());
         document.append("ts", order.getTs());
+        document.append("order_id", order.getOrderId());
         document.append("customer",getCustomerMap(order.getCustomer()));
         document.append("product",getProductMap(order.getProduct()));
         return document;

@@ -31,9 +31,11 @@ curl -i -X PUT -H "Accept:application/json" \
           "delete.on.null.values": "true",
           "document.id.strategy.overwrite.existing": "true",
           "document.id.strategy": "com.mongodb.kafka.connect.sink.processor.id.strategy.ProvidedInKeyStrategy",
-          "transforms":"hk",
-          "transforms.hk.type"  : "org.apache.kafka.connect.transforms.HoistField$Key",
-          "transforms.hk.field" : "_id",
+          "transforms":"copyIdToKey,replaceFieldInKey",
+          "transforms.copyIdToKey.type" : "org.apache.kafka.connect.transforms.ValueToKey",
+          "transforms.copyIdToKey.fields" : "order_id",
+          "transforms.replaceFieldInKey.type": "org.apache.kafka.connect.transforms.ReplaceField$Key",
+          "transforms.replaceFieldInKey.renames": "order_id:_id",
           "writemodel.strategy" : "com.mongodb.kafka.connect.sink.writemodel.strategy.ReplaceOneDefaultStrategy",
           "collection"          : "orders2"}'
 ```
