@@ -1,0 +1,42 @@
+{
+  "namespace": "shoes",
+  "imports": [
+    "customer.avsc",
+    "product.avsc"
+  ],
+  "type": "record",
+  "name": "shoe_orders_customers_products",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "int"
+    },
+    {
+      "name": "product",
+      "type": [
+        "null",
+        "shoe_product"
+      ],
+      "default": null
+    },
+    {
+      "name": "customer",
+      "type": [
+        "null",
+        "shoe_customers"
+      ],
+      "default": null
+    },
+    {
+      "name": "ts",
+      "type": [
+          "null",
+          {
+            "type" : "long",
+            "logicalType": "timestamp-millis"
+          }
+        ],
+        "default": null
+    }
+  ]
+}

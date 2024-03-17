@@ -45,7 +45,7 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   connect:
-    image: cnfldemos/cp-server-connect-datagen:${CONNECT_TAG}
+    image: confluentinc/cp-server-connect:${TAG}
     depends_on:
       - kafka1
     ports:

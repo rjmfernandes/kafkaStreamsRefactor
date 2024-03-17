@@ -29,24 +29,19 @@ As you see we only have source connectors:
 ```text
 [
   {
-    "class": "io.confluent.kafka.connect.datagen.DatagenConnector",
-    "type": "source",
-    "version": "null"
-  },
-  {
     "class": "org.apache.kafka.connect.mirror.MirrorCheckpointConnector",
     "type": "source",
-    "version": "7.5.0-ce"
+    "version": "7.6.0-ce"
   },
   {
     "class": "org.apache.kafka.connect.mirror.MirrorHeartbeatConnector",
     "type": "source",
-    "version": "7.5.0-ce"
+    "version": "7.6.0-ce"
   },
   {
     "class": "org.apache.kafka.connect.mirror.MirrorSourceConnector",
     "type": "source",
-    "version": "7.5.0-ce"
+    "version": "7.6.0-ce"
   }
 ]
 ```
@@ -62,10 +57,21 @@ docker compose exec -it connect bash
 Once inside the container we can install a new connector from confluent-hub:
 
 ```bash
-confluent-hub install mongodb/kafka-connect-mongodb:latest
+confluent-hub install confluentinc/kafka-connect-datagen:latest
 ```
 
 (Choose option 2 and after say yes to everything when prompted.)
+Do the same for:
+
+```bash
+confluent-hub install mongodb/kafka-connect-mongodb:latest
+```
+
+And for:
+
+```bash
+confluent-hub install confluent-hub install confluentinc/connect-transforms:latest
+```
 
 Now we need to restart our connect:
 
@@ -139,6 +145,10 @@ The second refactored example [KStreams example](./kafkaStreamsRefactor2/README.
 ## Third Refactor Example - leverages many KStreams (but no consumer apps) 
 
 The third example [Only KStreams example](./kafkaStreamsRefactor3/README.md) avoids any extra consumer apps and solves the problem with the Kafka Streams app only but leveraging KStreams for the joins and avoid the state store memory explosion. The major issue is that the code starts to become harder to maintain.
+
+## Forth Refactor - leverages only KTables but in parallel and not sequential with minimal partial sinks in parallel connectors
+
+The fourth example [Optimize to minimal table joins](./kafkaStreamsRefactor4/README.md) does everything with parallel KTables and non need for consumer apps again and using parallel connectors for sinking the minimal joins.
 
 ## Cleanup
 
