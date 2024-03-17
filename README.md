@@ -146,9 +146,13 @@ The second refactored example [KStreams example](./kafkaStreamsRefactor2/README.
 
 The third example [Only KStreams example](./kafkaStreamsRefactor3/README.md) avoids any extra consumer apps and solves the problem with the Kafka Streams app only but leveraging KStreams for the joins and avoid the state store memory explosion. The major issue is that the code starts to become harder to maintain.
 
-## Forth Refactor - leverages only KTables but in parallel and not sequential with minimal partial sinks in parallel connectors
+## Fourth Refactor - leverages only KTables but in parallel and not sequential with minimal partial sinks in parallel connectors
 
 The fourth example [Optimize to minimal table joins](./kafkaStreamsRefactor4/README.md) does everything with parallel KTables and non need for consumer apps again and using parallel connectors for sinking the minimal joins.
+
+## Fifth Refactor - leverage custom SMT
+
+The final example [Custom SMT for using only a single connector with minimal KTables joins refactoring](./kafkaStreamsRefactor5/README.md) is basically the same as the one before but now in place of using many (3) connectors we use just one leveraging a custom SMT to remove nulls so that the partial joins sinks don't overwrite each other.
 
 ## Cleanup
 
