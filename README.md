@@ -70,7 +70,7 @@ confluent-hub install mongodb/kafka-connect-mongodb:latest
 And for:
 
 ```bash
-confluent-hub install confluent-hub install confluentinc/connect-transforms:latest
+confluent-hub install confluentinc/connect-transforms:latest
 ```
 
 Now we need to restart our connect:

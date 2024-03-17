@@ -41,3 +41,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### PLUGINS ###
+plugins/confluent*
+plugins/mongodb*
