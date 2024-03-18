@@ -152,7 +152,11 @@ The fourth example [Optimize to minimal table joins](./kafkaStreamsRefactor4/REA
 
 ## Fifth Refactor - leverage custom SMT
 
-The final example [Custom SMT for using only a single connector with minimal KTables joins refactoring](./kafkaStreamsRefactor5/README.md) is basically the same as the one before but now in place of using many (3) connectors we use just one leveraging a custom SMT to remove nulls so that the partial joins sinks don't overwrite each other.
+The fifth example [Custom SMT for using only a single connector with minimal KTables joins refactoring](./kafkaStreamsRefactor5/README.md) is basically the same as the one before but now in place of using many (3) connectors we use just one leveraging a custom SMT to remove nulls so that the partial joins sinks don't overwrite each other.
+
+## Final and Extra - With Flink in Confluent Cloud
+
+Finally we show how to implement the same with no code just SQL leveraging Confluent Cloud Flink [Extra - With Flink in Confluent Cloud](https://github.com/rjmfernandes/kafkaStreamsRefactor/tree/main/Flink6).
 
 ## Cleanup
 
