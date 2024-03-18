@@ -45,3 +45,7 @@ build/
 ### PLUGINS ###
 plugins/confluent*
 plugins/mongodb*
+
+### Flink ###
+shoe-store/
+shoe-store/.env
