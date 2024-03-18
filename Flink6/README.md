@@ -207,6 +207,10 @@ curl -i -X PUT -H "Accept:application/json" \
 
 Let's check the data in the mongodb database in http://localhost:18081 for the new collection orders6.
 
+By the way our connector could also be a fully managed connector running in Confluent Cloud.
+
+Not sure if you notice but there is no code (except for SQL) if we implement with CC Flink and Kafka Connect...
+
 ## Destroy CC environment
 
 From the terraform folder:
