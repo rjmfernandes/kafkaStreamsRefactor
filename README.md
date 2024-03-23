@@ -79,7 +79,7 @@ Now we need to restart our connect:
 docker compose restart connect
 ```
 
-Now if we list our plugins again we should see two new ones corresponding to the Mongo connector.
+Now if we list our plugins again we should see three new ones corresponding to the Mongo connector and Datagen.
 
 Let's create our source connector using datagen:
 
