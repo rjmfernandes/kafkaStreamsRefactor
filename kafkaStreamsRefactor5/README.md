@@ -41,5 +41,5 @@ curl -i -X PUT -H "Accept:application/json" \
 Let's check the data in the mongodb database in http://localhost:18081 for the new collection orders5.
 
 (Note that for this case this is in fact the configuration of the connector you want to use, probably. Other scenarios 
-where you would want to have partial updates even for nested null fields would require an extra SMT Flatten to be +
+where you would want to have partial updates even for nested null fields would require an extra SMT Flatten to be 
 included before the RemoveNullFields SMT.)
