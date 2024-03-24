@@ -15,8 +15,9 @@ import static org.apache.kafka.connect.transforms.util.Requirements.requireMap;
 
 /********************************************************************************
  * Based on original code https://github.com/jobteaser-oss/kafka-connect-transforms/blob/master/src/main/java/com/jobteaser/kafka/connect/transforms/RemoveNulls.java
+ * Which was problematic because it was not removing nulls, but 0x00 bytes, and it was not working with nested structures and schemas.
  *
- * Bsed on original code was licensed under the Apache 2.0 License.
+ * The original code was licensed under the Apache 2.0 License.
  * @param <R>
  */
 public class RemoveNullFields<R extends ConnectRecord<R>> implements Transformation<R> {

@@ -3,6 +3,9 @@
 This project just creates the jar deployed for the custom SMT RemoveNullFields in order to avoid having to use many sink 
 connectors (one per table) for the mongodb sink connector in the last refactoring.
 
+(Based on original work by  https://github.com/jobteaser-oss/kafka-connect-transforms which was problematic because it 
+was not removing nulls, but 0x00 bytes, and it was not working with nested structures and schemas.)
+
 If you want to use this example just call the creation of the sink connector as follows 
 (after executing the last refactoring for minimal ktables parallel joins): 
 
@@ -36,3 +39,7 @@ curl -i -X PUT -H "Accept:application/json" \
 ```
 
 Let's check the data in the mongodb database in http://localhost:18081 for the new collection orders5.
+
+(Note that for this case this is in fact the configuration of the connector you want to use, probably. Other scenarios 
+where you would want to have partial updates even for nested null fields would require an extra SMT Flatten to be +
+included before the RemoveNullFields SMT.)
