@@ -49,3 +49,5 @@ plugins/mongodb*
 ### Flink ###
 shoe-store/
 shoe-store/.env
+
+Flink6/.env
