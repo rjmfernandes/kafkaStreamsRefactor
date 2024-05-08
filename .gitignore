@@ -51,3 +51,4 @@ shoe-store/
 shoe-store/.env
 
 Flink6/.env
+Flink6/terraform.tfstate
