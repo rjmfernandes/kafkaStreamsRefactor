@@ -5,13 +5,80 @@
 Now we try to run the same example from Flink just as demonstration within Confluent Cloud (CC).
 We run the instructions for deploying with terraform our setup in CC as here: https://github.com/griga23/shoe-store/blob/main/terraform/README.md (only till environment and cluster, topics and connectors are in place).
 
-Create after a Compute Pool on your environment (same regio of your cluster AWS-eu-central-1).
+We have summarised on the following script:
 
-Once created go to SQL Workspace and select as catalog your environment and database your cluster.
+```shell
+git clone https://github.com/griga23/shoe-store.git
+cd shoe-store
+echo "Enter a prefix value as 'rfernandes_':"
+read prefix_value
+confluent login
+CC_API_KEY_SECRET=`confluent api-key create --resource cloud --description "API for terraform"`
+CC_API_KEY=`echo "$CC_API_KEY_SECRET"| grep 'API Key'|sed s/'.*| '//g|sed s/' .*'//g`
+CC_API_SECRET=`echo "$CC_API_KEY_SECRET"| grep 'API Secret'|sed s/'.*| '//g|sed s/' .*'//g`
+cat > $PWD/terraform/terraform.tfvars <<EOF
+confluent_cloud_api_key = "$CC_API_KEY"
+confluent_cloud_api_secret = "$CC_API_SECRET"
+use_prefix = "$prefix_value"
+EOF
+cd ./terraform
+terraform init
+terraform plan
+terraform apply -auto-approve
+cc_hands_env=`terraform output -json | jq -r .cc_hands_env.value`
+cc_kafka_cluster=`terraform output -json | jq -r .cc_kafka_cluster.value`
+CC_SR_KEY=`terraform output -json | jq -r .SRKey.value`
+CC_SR_SECRET=`terraform output -json | jq -r .SRSecret.value`
+cd ..
+confluent environment use $cc_hands_env
+CC_FLINK_COMP_POOL=`confluent flink compute-pool create my-compute-pool --cloud aws --region eu-central-1 --max-cfu 10`
+cc_flink_pool=`echo "$CC_FLINK_COMP_POOL"| grep 'ID'|sed s/'.*| '//g|sed s/' .*'//g`
+confluent flink compute-pool use $cc_flink_pool
+```
 
-(All job statements executed on the UI with your user will run max to 4 hours.)
+Make sure to have a .env file with format:
+
+```
+TAG=7.6.0
+SR_URL=<<SR_URL>>
+BOOTSTRAP_SERVERS=<<BOOTSTRAP_SERVERS>>
+```
+
+- You can get the SR_URL looking at the Stream Governance API for your environment.
+- You can get the BOOTSTRAP_SERVERS by trying to add a new client to your cluster.
+
+Now you can open the sql console:
+
+```shell
+confluent flink shell
+```
+
 
 ## Tables with Primary Key
+
+Execute:
+
+```
+SHOW CATALOGS;
+```
+
+And use your catalog:
+
+```
+USE CATALOG <MY CONFLUENT ENVIRONMENT NAME>;
+```
+
+Also:
+
+```
+SHOW DATABASES;
+```
+
+And use your database listed:
+
+```
+USE <YOUR CLUSTER NAME>;
+```
 
 Let's create our tables with primary keys:
 
@@ -109,7 +176,7 @@ FROM
 Run:
 
 ```bash
-docker compose up -d
+CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose up -d
 ```
 
 You can check the connector plugins available by executing:
@@ -145,7 +212,7 @@ Let's install mongodb/kafka-connect-mongodb connector plugin for sink.
 For that we will open a shell into our connect container:
 
 ```bash
-docker compose exec -it connect bash
+CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose exec -it connect bash
 ```
 
 Once inside the container we can install a new connector from confluent-hub:
@@ -164,7 +231,7 @@ confluent-hub install confluentinc/connect-transforms:latest
 Now we need to restart our connect:
 
 ```bash
-docker compose restart connect
+CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose restart connect
 ```
 
 Now if we list our plugins again we should see two new ones corresponding to the Mongo connector.
@@ -173,7 +240,7 @@ Now if we list our plugins again we should see two new ones corresponding to the
 
 Make sure you have the main docker compose of the project with the mongodb running and database demo created.
 
-Run:
+Run (replace SR_UL both times it appears):
 
 ```bash
 curl -i -X PUT -H "Accept:application/json" \
@@ -188,10 +255,10 @@ curl -i -X PUT -H "Accept:application/json" \
           "database"           : "demo",
           "key.converter.schema.registry.url": "<SR_URL>",
           "key.converter.basic.auth.credentials.source": "USER_INFO",
-          "key.converter.schema.registry.basic.auth.user.info": "<SR_KEY>:<SR_SECRET>",
+          "key.converter.schema.registry.basic.auth.user.info": "'"$CC_SR_KEY"':'"$CC_SR_SECRET"'",
           "value.converter.schema.registry.url": "<SR_URL>",
           "value.converter.basic.auth.credentials.source": "USER_INFO",
-          "value.converter.schema.registry.basic.auth.user.info": "<SR_KEY>:<SR_SECRET>",
+          "value.converter.schema.registry.basic.auth.user.info": "'"$CC_SR_KEY"':'"$CC_SR_SECRET"'",
           "key.converter"       : "io.confluent.connect.avro.AvroConverter",
           "value.converter"     : "io.confluent.connect.avro.AvroConverter",
           "mongodb.delete.on.null.values": "true",
@@ -211,10 +278,18 @@ By the way our connector could also be a fully managed connector running in Conf
 
 Not sure if you notice but there is no code (except for SQL) if we implement with CC Flink and Kafka Connect...
 
+## Stop Local Connect
+
+```shell
+docker compose down -v
+```
+
 ## Destroy CC environment
 
-From the terraform folder:
+You may need to execute more than once to fully clean up in case of errors clenaing some of the resources:
 
 ```bash
-terraform destroy
+cd shoe-store/terraform
+terraform destroy -auto-approve
+cd ../..
 ```
