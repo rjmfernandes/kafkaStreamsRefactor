@@ -18,6 +18,8 @@ You can access the mongo express interface on http://localhost:18081 with user/p
 
 ### Connect
 
+If you already have the plugin folders you can jump to next step.
+
 You can check the connector plugins available by executing:
 
 ```bash
@@ -80,6 +82,8 @@ docker compose restart connect
 ```
 
 Now if we list our plugins again we should see three new ones corresponding to the Mongo connector and Datagen.
+
+### Create Connectors
 
 Let's create our source connector using datagen:
 
