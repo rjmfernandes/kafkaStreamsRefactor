@@ -4,6 +4,8 @@ services:
     image: confluentinc/cp-server-connect:${TAG}
     ports:
       - "8086:8083"
+    volumes:
+      - ./plugins:/usr/share/confluent-hub-components
     environment:
       CONNECT_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       CONNECT_SECURITY_PROTOCOL: SASL_SSL

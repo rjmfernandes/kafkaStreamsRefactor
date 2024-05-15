@@ -51,4 +51,8 @@ shoe-store/
 shoe-store/.env
 
 Flink6/.env
-Flink6/terraform.tfstate
+Flink6/plugins/
+
+flink/
+
+terraform.tfstate

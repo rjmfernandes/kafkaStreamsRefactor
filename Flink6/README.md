@@ -3,13 +3,13 @@
 ## Setup
 
 Now we try to run the same example from Flink just as demonstration within Confluent Cloud (CC).
-We run the instructions for deploying with terraform our setup in CC as here: https://github.com/griga23/shoe-store/blob/main/terraform/README.md (only till environment and cluster, topics and connectors are in place).
+We run the instructions for deploying with terraform our setup in CC as here: https://github.com/rjmfernandes/flink (only till environment and cluster, topics and connectors are in place).
 
 We have summarised on the following script:
 
 ```shell
-git clone https://github.com/griga23/shoe-store.git
-cd shoe-store
+git clone https://github.com/rjmfernandes/flink
+cd flink
 echo "Enter a prefix value as 'rfernandes_':"
 read prefix_value
 confluent login
@@ -22,17 +22,16 @@ confluent_cloud_api_secret = "$CC_API_SECRET"
 use_prefix = "$prefix_value"
 EOF
 cd ./terraform
-terraform init
+terraform init -upgrade
 terraform plan
 terraform apply -auto-approve
 cc_hands_env=`terraform output -json | jq -r .cc_hands_env.value`
 cc_kafka_cluster=`terraform output -json | jq -r .cc_kafka_cluster.value`
 CC_SR_KEY=`terraform output -json | jq -r .SRKey.value`
 CC_SR_SECRET=`terraform output -json | jq -r .SRSecret.value`
+cc_flink_pool=`terraform output -json | jq -r .FlinkComputePool.value`
 cd ../..
 confluent environment use $cc_hands_env
-CC_FLINK_COMP_POOL=`confluent flink compute-pool create my-compute-pool --cloud aws --region eu-central-1 --max-cfu 10`
-cc_flink_pool=`echo "$CC_FLINK_COMP_POOL"| grep 'ID'|sed s/'.*| '//g|sed s/' .*'//g`
 confluent flink compute-pool use $cc_flink_pool
 ```
 
@@ -52,35 +51,11 @@ CLOUD_SECRET=<<CLOUD_SECRET>>
 Now you can open the sql console:
 
 ```shell
-confluent flink shell
+confluent flink shell --database $cc_kafka_cluster
 ```
 
 
 ## Tables with Primary Key
-
-Execute:
-
-```
-SHOW CATALOGS;
-```
-
-And use your catalog:
-
-```
-USE CATALOG <MY CONFLUENT ENVIRONMENT NAME>;
-```
-
-Also:
-
-```
-SHOW DATABASES;
-```
-
-And use your database listed:
-
-```
-USE <YOUR CLUSTER NAME>;
-```
 
 Let's create our tables with primary keys:
 
@@ -154,23 +129,34 @@ And for populating it we run our join job:
 
 ```
 INSERT INTO order_customer_product(
-  id,
-  order_id,
-  product,
-  customer,
-  ts)
-SELECT
-  orders.order_id,
-  orders.order_id,
-  MAP['id',orders.product_id,'brand',products.brand,'name',products.name,'sale_price',CAST(products.sale_price AS varchar),'rating',CAST(products.rating AS varchar)],
-  MAP['id',orders.customer_id,'first_name',customers.first_name,'last_name',customers.last_name,'email',customers.email],
-  orders.ts
+  id, order_id, product, customer, ts
+) 
+SELECT 
+  orders.order_id, 
+  orders.order_id, 
+  MAP[ 'id', 
+  orders.product_id, 
+  'brand', 
+  products.brand, 
+  'name', 
+  products.name, 
+  'sale_price', 
+  CAST(products.sale_price AS varchar), 
+  'rating', 
+  CAST(products.rating AS varchar) ], 
+  MAP[ 'id', 
+  orders.customer_id, 
+  'first_name', 
+  customers.first_name, 
+  'last_name', 
+  customers.last_name, 
+  'email', 
+  customers.email], 
+  orders.ts 
 FROM 
-  orders
-  INNER JOIN customers 
-    ON orders.customer_id = customers.customer_id
-  INNER JOIN products
-    ON orders.product_id = products.product_id;
+  orders 
+  INNER JOIN customers ON orders.customer_id = customers.customer_id 
+  INNER JOIN products ON orders.product_id = products.product_id;
 ```
 
 ## Run Local Connect Instance Connected to CC
@@ -291,7 +277,7 @@ SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose down -v
 You may need to execute more than once to fully clean up in case of errors clenaing some of the resources:
 
 ```bash
-cd shoe-store/terraform
+cd flink/terraform
 terraform destroy -auto-approve
 cd ../..
 ```
