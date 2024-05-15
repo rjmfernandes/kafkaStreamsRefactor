@@ -29,23 +29,25 @@ cc_hands_env=`terraform output -json | jq -r .cc_hands_env.value`
 cc_kafka_cluster=`terraform output -json | jq -r .cc_kafka_cluster.value`
 CC_SR_KEY=`terraform output -json | jq -r .SRKey.value`
 CC_SR_SECRET=`terraform output -json | jq -r .SRSecret.value`
-cd ..
+cd ../..
 confluent environment use $cc_hands_env
 CC_FLINK_COMP_POOL=`confluent flink compute-pool create my-compute-pool --cloud aws --region eu-central-1 --max-cfu 10`
 cc_flink_pool=`echo "$CC_FLINK_COMP_POOL"| grep 'ID'|sed s/'.*| '//g|sed s/' .*'//g`
 confluent flink compute-pool use $cc_flink_pool
 ```
 
-Make sure to have a .env file with format:
+Make sure to have a .env file with format and content only:
 
 ```
 TAG=7.6.0
 SR_URL=<<SR_URL>>
 BOOTSTRAP_SERVERS=<<BOOTSTRAP_SERVERS>>
+CLOUD_KEY=<<CLOUD_KEY>>
+CLOUD_SECRET=<<CLOUD_SECRET>>
 ```
 
 - You can get the SR_URL looking at the Stream Governance API for your environment.
-- You can get the BOOTSTRAP_SERVERS by trying to add a new client to your cluster.
+- You can get the BOOTSTRAP_SERVERS and the API credentials by adding a new java client to your cluster.
 
 Now you can open the sql console:
 
@@ -176,7 +178,7 @@ FROM
 Run:
 
 ```bash
-CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose up -d
+SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose up -d
 ```
 
 You can check the connector plugins available by executing:
@@ -185,7 +187,7 @@ You can check the connector plugins available by executing:
 curl localhost:8086/connector-plugins | jq
 ```
 
-As you see we only have source connectors:
+If you see you only have the 3 default source connectors run (if you have already the mongodb sink connector skip to **Configure Sink Connector to Mongodb**):
 
 ```text
 [
@@ -212,7 +214,7 @@ Let's install mongodb/kafka-connect-mongodb connector plugin for sink.
 For that we will open a shell into our connect container:
 
 ```bash
-CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose exec -it connect bash
+SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose exec -it connect bash
 ```
 
 Once inside the container we can install a new connector from confluent-hub:
@@ -231,7 +233,7 @@ confluent-hub install confluentinc/connect-transforms:latest
 Now we need to restart our connect:
 
 ```bash
-CLOUD_KEY="${CC_API_KEY}" CLOUD_SECRET="${CC_API_SECRET}" SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose restart connect
+SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose restart connect
 ```
 
 Now if we list our plugins again we should see two new ones corresponding to the Mongo connector.
@@ -240,7 +242,7 @@ Now if we list our plugins again we should see two new ones corresponding to the
 
 Make sure you have the main docker compose of the project with the mongodb running and database demo created.
 
-Run (replace SR_UL both times it appears):
+Run (**replace SR_UL both times it appears**):
 
 ```bash
 curl -i -X PUT -H "Accept:application/json" \
@@ -281,7 +283,7 @@ Not sure if you notice but there is no code (except for SQL) if we implement wit
 ## Stop Local Connect
 
 ```shell
-docker compose down -v
+SR_KEY="${CC_SR_KEY}" SR_SECRET="${CC_SR_SECRET}" docker compose down -v
 ```
 
 ## Destroy CC environment

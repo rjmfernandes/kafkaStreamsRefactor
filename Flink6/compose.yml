@@ -1,5 +1,4 @@
 ---
-version: "3.5"
 services:
   connect:
     image: confluentinc/cp-server-connect:${TAG}
